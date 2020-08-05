@@ -11,7 +11,7 @@ env <- list(L = 30, N = 1e-6, X = 1e-7) # Constant Environment
 # Helper Methods
 synth <- function(m, A, B) {A * B * (A + B) * m / (A^2 * B + A * B^2 + A^2 * m + A * B * m + B^2 * m)}
 mmk <- function(A, half, max) {max * A / (A + half)}
-eq <- function(x, aim) {lambda * (aim - x)} # dX.dt = lambda * (fX - X)
+eq <- function(x, aim) {lambda * (aim - x)} # dy.dt = lambda * (aim - y) | aim = f(y_1, y_2, ...)
 
 # Parameters
 depars <- append(unlist(defPars(nsym = 1)), c(env))
@@ -39,101 +39,63 @@ destate <- {
     cROS <- 1
     dS.Sdt <- pars$jSGm
     S <- pars$initS
-    c(
-      # Initial Model Values
-      X = c(
-        jHG = jHG,
-        rhoN = rhoN,
-        jeC = jeC,
-        jCO2 = jCO2,
-        jL = jL,
-        rCH = rCH,
-        rCS = rCS,
-        jCP = jCP,
-        jeL = jeL,
-        jNPQ = jNPQ,
-        cROS = cROS,
-        jSG = jSG,
-        rhoC = rhoC,
-        jST = jST
-      ),
+    c(# Initial Model Values
+      jHG = jHG,
+      rhoN = rhoN,
+      jeC = jeC,
+      jCO2 = jCO2,
+      jL = jL,
+      rCH = rCH,
+      rCS = rCS,
+      jCP = jCP,
+      jeL = jeL,
+      jNPQ = jNPQ,
+      cROS = cROS,
+      jSG = jSG,
+      rhoC = rhoC,
+      jST = jST,
       # Host and Symbiont biomass
       H = H,
-      S = S,
-      # Initial Aims
-      fX = c(
-        jHG = jHG,
-        rhoN = rhoN,
-        jeC = jeC,
-        jCO2 = jCO2,
-        jL = jL,
-        rCH = rCH,
-        rCS = rCS,
-        jCP = jCP,
-        jeL = jeL,
-        jNPQ = jNPQ,
-        cROS = cROS,
-        jSG = jSG,
-        rhoC = rhoC,
-        jST = jST
-      )
+      S = S
     )}
-# initd, initial rates of change, is only needed if using res argument of daspk()
-# initd <- rep(0.1, 30)
-# names(initd) <- paste0("d", names(destate))
 
 # function for daspk() func argument, returns list, where first element is a
 # vector containing right hand sides of DEs and the residual forms of the
 # algebraic equations
-coral <- function(t, y, parms) {
+coral <- function(t, y, parameters) {
+  pars <- parameters
   # Constant values, including as states seemed to make the solver unhappy
-  consts <- list(jX = mmk(parms$X, parms$KX, parms$jXm), 
-                 jN = mmk(parms$N, parms$KN, parms$jNm),
-                 jHT = parms$jHT0,
-                 rNH = parms$jHT0 * parms$nNH * parms$sigmaNH,
-                 rNS = parms$jST0 * parms$nNS * parms$sigmaNS)
+  consts <- list(jX = mmk(pars$X, pars$KX, pars$jXm), 
+                 jN = mmk(pars$N, pars$KN, pars$jNm),
+                 jHT = pars$jHT0,
+                 rNH = pars$jHT0 * pars$nNH * pars$sigmaNH,
+                 rNS = pars$jST0 * pars$nNS * pars$sigmaNS)
   
-  with(as.list(c(y, parms, consts)), {
+  with(as.list(c(y, pars, consts)), {
     list(c(# DEs
-         eq(X.jHG, fX.jHG),  # X.jHG
-         eq(X.rhoN, fX.rhoN),  # X.rhoN
-         eq(X.jeC, fX.jeC),  # X.jeC
-         eq(X.jCO2, fX.jCO2),  # X.jCO2
-         eq(X.jL, fX.jL),  # X.jL
-         eq(X.rCH, fX.rCH),  # X.rCH
-         eq(X.rCS, fX.rCS),  # X.rCS
-         eq(X.jCP, fX.jCP),  # X.jCP
-         eq(X.jeL, fX.jeL),  # X.jeL
-         eq(X.jNPQ, fX.jNPQ),  # X.jNPQ
-         eq(X.cROS, fX.cROS),  # X.cROS
-         eq(X.jSG, fX.jSG),  # X.jSG
-         eq(X.rhoC, fX.rhoC),  # X.rhoC
-         eq(X.jST, fX.jST),  # X.jST
-         (X.jHG - jHT) * H,  #X.jHG
-         (X.jSG - X.jST) * S,  # X.jSG
-         # Residuals, using consts jX, jN, jHT, rNH, rNS, and are of the form 0 = y - (calculation of y)
-         fX.jHG - synth(jHGm, yC * fX.rhoC * S / H + jX, (jN + nNX * jX + rNH) / nNH),
-         fX.rhoN - max(0, jN + nNX * jX + rNH - nNH * fX.jHG / yC),
-         fX.jeC - max(0, jX + fX.rhoC * S / H - fX.jHG / yC),
-         fX.jCO2 - kCO2 * fX.jeC,
-         fX.jL - (1.26 + 1.39 * exp(-6.48 * S / H)) * L * astar,
-         fX.rCH - sigmaCH * (jHT + (1 - yC) * fX.jHG / yC),
-         fX.rCS - sigmaCS * (jST0 + (1-yC) * fX.jSG / yC),
-         fX.jCP - synth(jCPm, yCL * fX.jL, (fX.jCO2 + fX.rCH) * H / S + fX.rCS) / fX.cROS,
-         fX.jeL - max(0, fX.jL - fX.jCP / yCL),
-         fX.jNPQ - 1 / (1 / kNPQ + 1 / fX.jeL),
-         fX.cROS - (1 + max(0, fX.jeL - fX.jNPQ) / kROS),
-         fX.jSG - synth(jSGm, yC * fX.jCP, (rhoN * H / S + rNS) / nNS),
-         fX.rhoC - max(0, fX.jCP - fX.jSG / yC),
-         fX.jST - jST0 * (1 + b * (fX.cROS - 1))
+         eq(jHG, synth(jHGm, yC * rhoC * S / H + jX, (jN + nNX * jX + rNH) / nNH)),  # jHG
+         eq(rhoN, max(0, jN + nNX * jX + rNH - nNH * jHG / yC)),  # rhoN
+         eq(jeC, max(0, jX + rhoC * S / H - jHG / yC)),  # jeC
+         eq(jCO2, kCO2 * jeC),  # jCO2
+         eq(jL, (1.26 + 1.39 * exp(-6.48 * S / H)) * L * astar),  # jL
+         eq(rCH, sigmaCH * (jHT + (1 - yC) * jHG / yC)),  # rCH
+         eq(rCS, sigmaCS * (jST0 + (1-yC) * jSG / yC)),  # rCS
+         eq(jCP, synth(jCPm, yCL * jL, (jCO2 + rCH) * H / S + rCS) / cROS),  # X.jCP
+         eq(jeL, max(0, jL - jCP / yCL)),  # X.jeL
+         eq(jNPQ, 1 / (1 / kNPQ + 1 / jeL)),  # X.jNPQ
+         eq(cROS, (1 + max(0, jeL - jNPQ) / kROS)),  # X.cROS
+         eq(jSG, synth(jSGm, yC * jCP, (rhoN * H / S + rNS) / nNS)),  # X.jSG
+         eq(rhoC, max(0, jCP - jSG / yC)),  # X.rhoC
+         eq(jST, jST0 * (1 + b * (cROS - 1))),  # X.jST
+         (jHG - jHT) * H,  # H
+         (jSG - jST) * S  # S
   ))})
 }
-# Mass matrix for DAE
-mass <- diag(nrow = 30, ncol = 30)  # Create diagonal matrix of correct size
-mass[17:30, 17:30] <- 0  # Set masses of algebraic expressions to 0
 
-times <- seq(0, 100, 0.1)  # Sequence of times for run
+times <- seq(0, 500, 0.1)  # Sequence of times for run
 
 # Run the model
-out <- daspk(y = destate, times = times, func = coral, parms = depars, verbose = T, mass = mass)
-plot(out[,1], out[,41]/out[,40], "l", lwd = 2, main = "S:H Biomass")
+out <- ode(y = destate, times = times, func = coral, parms = depars, verbose = T)
+plot(out[,1], out[,17]/out[,16], "l", lwd = 2, main = "S:H Biomass")
+
+run_coral(times, init_env(times, c(30, 30, 0), c(1e-6, 1e-6, 0), c(1e-7, 1e-7, 0)), def_pars(1))
