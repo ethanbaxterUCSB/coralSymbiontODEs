@@ -14,7 +14,7 @@ mmk <- function(A, half, max) {max * A / (A + half)}
 eq <- function(x, aim) {lambda * (aim - x)} # dy.dt = lambda * (aim - y) | aim = f(y_1, y_2, ...)
 
 # Parameters
-depars <- append(unlist(defPars(nsym = 1)), c(env))
+depars <- append(unlist(defPars(nsym = nsym)), c(env))
 
 # Vector of state variables and their initial values
 destate <- {
@@ -92,10 +92,14 @@ coral <- function(t, y, parameters) {
   ))})
 }
 
-times <- seq(0, 500, 0.1)  # Sequence of times for run
+times <- seq(0, 365, 0.1)  # Sequence of times for run
 
 # Run the model
-out <- ode(y = destate, times = times, func = coral, parms = depars, verbose = T)
+system.time(outv <- ode(y = destate, times = times, func = coral, parms = depars, verbose = T))
+system.time(out <- ode(y = destate, times = times, func = coral, parms = depars, verbose = F))
 plot(out[,1], out[,17]/out[,16], "l", lwd = 2, main = "S:H Biomass")
 
-run_coral(times, init_env(times, c(30, 30, 0), c(1e-6, 1e-6, 0), c(1e-7, 1e-7, 0)), def_pars(1))
+#For verification against original package coRal
+library(coRal)
+system.time(master <- run_coral(times, init_env(times, c(30, 30, 0), c(1e-6, 1e-6, 0), c(1e-7, 1e-7, 0)), def_pars(1)))
+plot(times, out[,17]/out[,16] - master$S/master$H, "l", lwd = 2)
