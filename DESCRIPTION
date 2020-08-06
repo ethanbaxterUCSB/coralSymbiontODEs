@@ -5,7 +5,7 @@ Version: 0.1.0
 Author: Ethan Baxter
 Maintainer: Ethan Baxter <ethanbaxter@ucsb.edu>
 Description: Solves the Coral-Symbiodinium ODE System described by Ferdinand Pfab. Is essentially a transcription of his Mathematica code to R.
-Imports:
+Depends:
     deSolve
 License: MIT + file LICENSE
 Encoding: UTF-8
