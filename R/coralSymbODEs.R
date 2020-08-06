@@ -16,7 +16,7 @@
 solveCoral <- function(times = c(0,500), pars = defPars(), env = list(L=30, N=1e-6, X=1e-7), lambda = 5, method = "vode") {
   destate <- initState(pars, env)  # Initial state for ode()
   depars <- append(unlist(pars), c(env, lambda = lambda))  # Parms for ode()
-  return(ode(y = destate, times = times, func = coralODEs, parms = depars, method = method))
+  return(deSolve::ode(y = destate, times = times, func = coralODEs, parms = depars, method = method))
 }
 
 # ==============
