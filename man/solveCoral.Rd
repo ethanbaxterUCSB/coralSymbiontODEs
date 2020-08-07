@@ -24,14 +24,14 @@ solveCoral(
 \item{method}{The character method argument of ode() from deSolve desired. Default "vode".}
 }
 \value{
-Matrix of values for fluxes at explicitly desired time values.
+Matrix of values for fluxes, biomass, and host growth rate at explicitly desired time values.
 }
 \description{
 Function solveCoral uses the deSolve package to generate values similar to coRal. Is essentially a transcription of Ferdinand Pfab's Mathematica code to R.
 }
 \examples{
-vodeCoralSymb()
-vodeCoralSymb(times = seq(0,365,0.1), pars = defPars(), env = c(L = 40, N = 1e-7, X = 1e-7), lambda = 10)
+solveCoral()
+solveCoral(times = seq(0,365,0.1), pars = defPars(), env = c(L = 40, N = 1e-7, X = 1e-7), lambda = 10)
 }
 \seealso{
 \code{\link{defPars}}

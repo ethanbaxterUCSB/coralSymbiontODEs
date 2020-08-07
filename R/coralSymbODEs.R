@@ -7,10 +7,10 @@
 #' @param env A named list describing the constant environment for the runs. Default list(L = 30, N = 1e-6, X = 1e-7).
 #' @param lambda The sensitivity of the runs. High values are more sensitive and small values are less sensitive. Default 5.
 #' @param method The character method argument of ode() from deSolve desired. Default "vode".
-#' @return Matrix of values for fluxes at explicitly desired time values.
+#' @return Matrix of values for fluxes, biomass, and host growth rate at explicitly desired time values.
 #' @examples
-#' vodeCoralSymb()
-#' vodeCoralSymb(times = seq(0,365,0.1), pars = defPars(), env = c(L = 40, N = 1e-7, X = 1e-7), lambda = 10)
+#' solveCoral()
+#' solveCoral(times = seq(0,365,0.1), pars = defPars(), env = c(L = 40, N = 1e-7, X = 1e-7), lambda = 10)
 #' @seealso \code{\link{defPars}}
 #' @export
 solveCoral <- function(times = c(0,500), pars = defPars(), env = list(L=30, N=1e-6, X=1e-7), lambda = 5, method = "vode") {
@@ -51,7 +51,8 @@ coralODEs <- function(t, y, parameters) {
       eq(jST, jST0 * (1 + b * (cROS - 1)), lambda),  # X.jST
       (jHG - jHT) * H,  # H
       (jSG - jST) * S  # S
-    ))}))
+    ),
+    c(dH.dt = (jHG - jHT) * H))}))
 }
 
 # Synthesis rate of a product given maximum rate m and substrates A and B.
