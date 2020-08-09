@@ -7,16 +7,17 @@
 #' @param env A named list describing the constant environment for the runs. Default list(L = 30, N = 1e-6, X = 1e-7).
 #' @param lambda The sensitivity of the runs. High values are more sensitive and small values are less sensitive. Default 5.
 #' @param method The character method argument of ode() from deSolve desired. Default "vode".
+#' @param ... Any other arguments to be passed to ode().
 #' @return Matrix of values for fluxes, biomass, and host growth rate at explicitly desired time values.
 #' @examples
 #' solveCoral()
 #' solveCoral(times = seq(0,365,0.1), pars = defPars(), env = c(L = 40, N = 1e-7, X = 1e-7), lambda = 10)
 #' @seealso \code{\link{defPars}}
 #' @export
-solveCoral <- function(times = c(0,500), pars = defPars(), env = list(L=30, N=1e-6, X=1e-7), lambda = 5, method = "vode") {
-  destate <- initState(pars, env)  # Initial state for ode()
-  depars <- append(unlist(pars), c(env, lambda = lambda))  # Parms for ode()
-  return(deSolve::ode(y = destate, times = times, func = coralODEs, parms = depars, method = method))
+solveCoral <- function(times = c(0,500), pars = defPars(), env = list(L=30, N=1e-6, X=1e-7), lambda = 5, method = "vode", ...) {
+  # destate <- initState(pars, env)  # Initial state for ode()
+  # depars <- append(pars, c(env, lambda = lambda))  # Parms for ode()
+  return(ode(y = initState(pars, env),times = times,func = coralODEs,parms = append(pars, c(env, lambda = lambda)),method = method,...))
 }
 
 # ==============
@@ -25,13 +26,14 @@ solveCoral <- function(times = c(0,500), pars = defPars(), env = list(L=30, N=1e
 
 # System of flux ODEs of the form dy.dt = lambda * (f(y_1, y_2, ...) - y)
 coralODEs <- function(t, y, parameters) {
-  pars <- parameters
   # Constant values, including as states seemed to make the solver unhappy
-  consts <- c(jX = mmk(pars$X, pars$KX, pars$jXm),
-              jN = mmk(pars$N, pars$KN, pars$jNm),
-              jHT = pars$jHT0,
-              rNH = pars$jHT0 * pars$nNH * pars$sigmaNH,
-              rNS = pars$jST0 * pars$nNS * pars$sigmaNS)
+  consts <- with(parameters,{
+    c(jX = mmk(X, KX, jXm),
+      jN = mmk(N, KN, jNm),
+      jHT = jHT0,
+      rNH = jHT0 * nNH * sigmaNH,
+      rNS = jST0 * nNS * sigmaNS)
+  })
 
   return(with(as.list(c(y, pars, consts)), {
     list(c(# DEs
@@ -71,7 +73,7 @@ eq <- function(x, aim, lambda) {lambda * (aim - x)} # dy.dt = lambda * (aim - y)
 #' @return Named list of model parameters.
 #' @export
 defPars <- function() {
-  return(list(
+  return(c(
     jHT0=0.03,  # Host specific biomass turnover rate (d^-1)
     nNH=0.18,  # N:C ratio in host biomass (-)
     nNX=0.2,  # N:C ratio in prey biomass (-)

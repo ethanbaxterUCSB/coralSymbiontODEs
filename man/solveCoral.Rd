@@ -9,7 +9,8 @@ solveCoral(
   pars = defPars(),
   env = list(L = 30, N = 1e-06, X = 1e-07),
   lambda = 5,
-  method = "vode"
+  method = "vode",
+  ...
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ solveCoral(
 \item{lambda}{The sensitivity of the runs. High values are more sensitive and small values are less sensitive. Default 5.}
 
 \item{method}{The character method argument of ode() from deSolve desired. Default "vode".}
+
+\item{...}{Any other arguments to be passed to ode().}
 }
 \value{
 Matrix of values for fluxes, biomass, and host growth rate at explicitly desired time values.
