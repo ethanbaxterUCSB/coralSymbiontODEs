@@ -35,7 +35,7 @@ coralODEs <- function(t, y, parameters) {
       rNS = jST0 * nNS * sigmaNS)
   })
 
-  return(with(as.list(c(y, pars, consts)), {
+  return(with(as.list(c(y, parameters, consts)), {
     list(c(# DEs
       eq(jHG, synth(jHGm, yC * rhoC * S / H + jX, (jN + nNX * jX + rNH) / nNH), lambda = lambda),  # jHG
       eq(rhoN, max(0, jN + nNX * jX + rNH - nNH * jHG / yC), lambda),  # rhoN
