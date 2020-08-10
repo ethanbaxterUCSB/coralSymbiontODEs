@@ -11,13 +11,20 @@
 #' @examples
 #' solveCoral()
 #' solveCoral(times = seq(0,365,0.1), pars = defPars(), lambda = 10, atol = 0.01, rtol = 0.01)
-#' @seealso \code{\link{defPars}}
+#' @seealso \code{\link{defPars}}, \code{\link{initState}}
 #' @export
 solveCoral <- function(times = c(0,500), pars = defPars(), lambda = 5, method = "vode", ...) {
-  # destate <- initState(pars, env)  # Initial state for ode()
-  # depars <- append(pars, c(env, lambda = lambda))  # Parms for ode()
-  return(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda)), method = method,...))
-}
+  # Constant fluxes
+  consts <- with(as.list(pars), {
+    c(jX = mmk(X, KX, jXm),
+      jN = mmk(N, KN, jNm),
+      jHT = jHT0,
+      rNH = jHT0 * nNH * sigmaNH,
+      rNS = jST0 * nNS * sigmaNS)
+  })
+  # Solve system and return
+  return(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda, consts)), method = method,...))
+}  # End function solveCoral
 
 # ==============
 # Helper methods
@@ -25,16 +32,7 @@ solveCoral <- function(times = c(0,500), pars = defPars(), lambda = 5, method = 
 
 # System of flux ODEs of the form dy.dt = lambda * (f(y_1, y_2, ...) - y)
 coralODEs <- function(t, y, parameters) {
-  # Constant values, including as states seemed to make the solver unhappy
-  consts <- with(parameters,{
-    c(jX = mmk(X, KX, jXm),
-      jN = mmk(N, KN, jNm),
-      jHT = jHT0,
-      rNH = jHT0 * nNH * sigmaNH,
-      rNS = jST0 * nNS * sigmaNS)
-  })
-
-  return(with(as.list(c(y, parameters, consts)), {
+  return(with(as.list(c(y, parameters)), {
     list(c(# DEs
       eq(jHG, synth(jHGm, yC * rhoC * S / H + jX, (jN + nNX * jX + rNH) / nNH), lambda = lambda),  # jHG
       eq(rhoN, max(0, jN + nNX * jX + rNH - nNH * jHG / yC), lambda),  # rhoN
@@ -54,7 +52,7 @@ coralODEs <- function(t, y, parameters) {
       (jSG - jST) * S  # S
     ),
     c(dH.dt = (jHG - jHT) * H))}))
-}
+}  # End function coralODEs
 
 # Synthesis rate of a product given maximum rate m and substrates A and B.
 synth <- function(m, A, B) {A * B * (A + B) * m / (A^2 * B + A * B^2 + A^2 * m + A * B * m + B^2 * m)}
@@ -105,7 +103,7 @@ defPars <- function() {
     N=1e-6,  # Environmental DIN (mol N)
     X=1e-7  # Environmental prey (mol X)
   ))
-}
+}  # End function defpars
 
 #' Create initial state for solveCoral
 #'
@@ -113,8 +111,8 @@ defPars <- function() {
 #' @param pars The named list of model parameters.
 #' @param env The named list of environmental values.
 #' @return A named numeric vector containing the initial flux and biomass values.
-#' @seealso \code{\link{solveCoral}}
-#' @examples initState(defPars(), list(L = 30, N = 1e-6, X = 1e-7))
+#' @seealso \code{\link{solveCoral}}, \code{\link{defPars}}
+#' @examples initState(defPars())
 #' @export
 initState <- function(pars) {
   with(as.list(pars), {
@@ -147,4 +145,4 @@ initState <- function(pars) {
       H = H,
       S = S))
   })
-}
+}  # End function initState

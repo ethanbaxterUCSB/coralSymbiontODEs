@@ -18,8 +18,8 @@ A named numeric vector containing the initial flux and biomass values.
 Helper function, based off of run_coral() from package coRal.
 }
 \examples{
-initState(defPars(), list(L = 30, N = 1e-6, X = 1e-7))
+initState(defPars())
 }
 \seealso{
-\code{\link{solveCoral}}
+\code{\link{solveCoral}}, \code{\link{defPars}}
 }

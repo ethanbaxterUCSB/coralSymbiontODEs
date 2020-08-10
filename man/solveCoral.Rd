@@ -34,5 +34,5 @@ solveCoral()
 solveCoral(times = seq(0,365,0.1), pars = defPars(), lambda = 10, atol = 0.01, rtol = 0.01)
 }
 \seealso{
-\code{\link{defPars}}
+\code{\link{defPars}}, \code{\link{initState}}
 }
