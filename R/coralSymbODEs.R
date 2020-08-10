@@ -1,23 +1,22 @@
 #' Solve coral-\emph{Symbiodinium} ODEs
 #'
-#' Function solveCoral uses the deSolve package to generate values similar to coRal. Is essentially a transcription of Ferdinand Pfab's Mathematica code to R.
+#' Function solveCoral uses the deSolve package to generate values similar to coRal (Cunning). Is essentially a transcription of Ferdinand Pfab's Mathematica code to R.
 #'
 #' @param times The time values at which output is desired. Default c(0,500).
-#' @param pars The paramaters of the model, given as a list. See function \code{\link{defPars}}. Default defPars(1).
-#' @param env A named list describing the constant environment for the runs. Default list(L = 30, N = 1e-6, X = 1e-7).
+#' @param pars The paramaters of the model, given as a list. See function \code{\link{defPars}}. Default defPars().
 #' @param lambda The sensitivity of the runs. High values are more sensitive and small values are less sensitive. Default 5.
 #' @param method The character method argument of ode() from deSolve desired. Default "vode".
 #' @param ... Any other arguments to be passed to ode().
 #' @return Matrix of values for fluxes, biomass, and host growth rate at explicitly desired time values.
 #' @examples
 #' solveCoral()
-#' solveCoral(times = seq(0,365,0.1), pars = defPars(), env = c(L = 40, N = 1e-7, X = 1e-7), lambda = 10)
+#' solveCoral(times = seq(0,365,0.1), pars = defPars(), lambda = 10, atol = 0.01, rtol = 0.01)
 #' @seealso \code{\link{defPars}}
 #' @export
-solveCoral <- function(times = c(0,500), pars = defPars(), env = list(L=30, N=1e-6, X=1e-7), lambda = 5, method = "vode", ...) {
+solveCoral <- function(times = c(0,500), pars = defPars(), lambda = 5, method = "vode", ...) {
   # destate <- initState(pars, env)  # Initial state for ode()
   # depars <- append(pars, c(env, lambda = lambda))  # Parms for ode()
-  return(ode(y = initState(pars, env),times = times,func = coralODEs,parms = append(pars, c(env, lambda = lambda)),method = method,...))
+  return(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda)), method = method,...))
 }
 
 # ==============
@@ -68,9 +67,10 @@ eq <- function(x, aim, lambda) {lambda * (aim - x)} # dy.dt = lambda * (aim - y)
 
 #' Default parameters for solveCoral
 #'
-#' Helper function, based off of def_pars() from package coRal.
+#' Helper function, based off of def_pars() from package coRal by Ross Cunning.
 #' @examples defPars()
-#' @return Named list of model parameters.
+#' @return Named list of model parameters. Includes environment.
+#' @seealso \code{\link{solveCoral}}
 #' @export
 defPars <- function() {
   return(c(
@@ -100,7 +100,10 @@ defPars <- function() {
     jCPm=2.8,  # Maximum specific photosynthate production rate (Cmol/CmolS/d)
     jSGm=0.25,  # Maximum specific symbiont growth rate (CmolS/CmolS/d)
     initS=1,  # Initial symbiont biomass (CmolS)
-    b=5  # Scaling parameter for bleaching response
+    b=5,  # Scaling parameter for bleaching response
+    L=30,  # Environmental light (mol photons)
+    N=1e-6,  # Environmental DIN (mol N)
+    X=1e-7  # Environmental prey (mol X)
   ))
 }
 
@@ -113,8 +116,8 @@ defPars <- function() {
 #' @seealso \code{\link{solveCoral}}
 #' @examples initState(defPars(), list(L = 30, N = 1e-6, X = 1e-7))
 #' @export
-initState <- function(pars, env) {
-  with(as.list(c(pars, env)), {
+initState <- function(pars) {
+  with(as.list(pars), {
     # Initial Host fluxes
     rhoN <- mmk(N, KN, jNm)
     jeC <- 10

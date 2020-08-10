@@ -4,7 +4,7 @@
 \alias{initState}
 \title{Create initial state for solveCoral}
 \usage{
-initState(pars, env)
+initState(pars)
 }
 \arguments{
 \item{pars}{The named list of model parameters.}

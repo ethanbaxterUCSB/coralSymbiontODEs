@@ -7,11 +7,14 @@
 defPars()
 }
 \value{
-Named list of model parameters.
+Named list of model parameters. Includes environment.
 }
 \description{
-Helper function, based off of def_pars() from package coRal.
+Helper function, based off of def_pars() from package coRal by Ross Cunning.
 }
 \examples{
 defPars()
+}
+\seealso{
+\code{\link{solveCoral}}
 }
