@@ -23,7 +23,7 @@ solveCoral <- function(times = c(0,500), pars = defPars(), lambda = 5, method = 
       rNS = jST0 * nNS * sigmaNS)
   })
   # Solve system and return
-  return(cbind(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda, consts)), method = method, ...),consts))
+  return(cbind(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda, consts)), method = method, ...),jX = consts[1],jN = consts[2],jHT = consts[3],rNH = consts[4],rNS = consts[5]))
 }  # End function solveCoral
 
 # Helper methods
