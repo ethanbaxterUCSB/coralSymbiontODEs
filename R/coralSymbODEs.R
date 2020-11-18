@@ -23,10 +23,9 @@ solveCoral <- function(times = c(0,500), pars = defPars(), lambda = 5, method = 
       rNS = jST0 * nNS * sigmaNS)
   })
   # Solve system and return
-  return(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda, consts)), method = method,...))
+  return(cbind(ode(y = initState(pars), times = times, func = coralODEs, parms = append(pars, c(lambda = lambda, consts)), method = method, ...),consts))
 }  # End function solveCoral
 
-# ==============
 # Helper methods
 # ==============
 
@@ -51,7 +50,7 @@ coralODEs <- function(t, y, parameters) {
       (jHG - jHT) * H,  # H
       (jSG - jST) * S  # S
     ),
-    c(dH.dt = (jHG - jHT) * H))}))
+    c(dH.dt = (jHG - jHT) * H,dS.dt = (jSG - jST) * S))}))
 }  # End function coralODEs
 
 # Synthesis rate of a product given maximum rate m and substrates A and B.
@@ -80,6 +79,8 @@ defPars <- function() {
     jXm=0.13,  # Maximum specific host feeding rate (molX/CmolH/d)
     jNm=0.035,  # Maximum specific host DIN uptake rate (molN/CmolH/d)
     jHGm=1,  # Maximum specific host growth rate (CmolH/CmolH/d)
+    jHG0 = 0.25,  # initial host growth rate
+    jeC0 = 10,  # initial excess carbon flux
     kCO2=10,  # Rate of host CCM's (molCO2/molC/d)
     KN=1.5e-6,  # Half-saturation constant for host DIN uptake (molN/L)
     KX=1e-6,  # Half-saturation constant for host feeding (CmolX/L)
@@ -91,6 +92,7 @@ defPars <- function() {
     kNPQ=112,  # capacity of non-photochemical quenching (mol ph/CmolS/d)
     # calculated as 4x max. photochemical quenching (Gorbunov et al. 2001)
     kROS=80,  # amount of excess light beyond NPQ capacity (e.g., jeL-jNPQ) that doubles ROS production relative to baseline (mol ph/CmolS/d)
+    cROS0 = 1,  # capacity for NPQ
     k=1,  # exponent on ROS production (-)
     astar=1.34,  # Symbiont specific cross-sectional area (m^2/C-molS)
     sigmaNS=0.9,  # Proportion of symbiont nitrogen turnover recylced (-)
@@ -118,9 +120,9 @@ initState <- function(pars) {
   with(as.list(pars), {
     # Initial Host fluxes
     rhoN <- mmk(N, KN, jNm)
-    jeC <- 10
+    jeC <- jeC0+
     jCO2 <- kCO2 * jeC
-    jHG <- 0.25
+    jHG <- jHG0
     rCH <- jHT0 * sigmaCH
     dH.Hdt <- jHGm
     H <- initH
@@ -133,7 +135,7 @@ initState <- function(pars) {
     rhoC <- jCP
     jST <- jST0
     rCS <- jST0 * sigmaCS
-    cROS <- 1
+    cROS <- cROS0
     dS.Sdt <- jSGm
     S <- initS
     # Return named numeric vector
@@ -146,3 +148,20 @@ initState <- function(pars) {
       S = S))
   })
 }  # End function initState
+
+#' Wrapper function to coRal
+#'
+#' Has the same input and output as run_coral() from the coRal package
+#' @export
+coRal.solveCoralWrapper <- function(time, env, pars) {
+  # time is equivalent to times
+  # can only be used for constant env values at this point
+  newPars <- append(pars, c(L = env[['L']][[1]],N = env[['N']][[1]],X = env[['X']][[1]]))
+  run <- solveCoral(time, newPars)
+  with(as.data.frame(run),{
+    out <- data.frame(time,env$L,env$N,env$X,jN,rhoN,jeC,jCO2,jHG,rCH,
+                      dH.Hdt=dH.dt/H,H,rNS,jL,jCP,jeL,jNPQ,jSG,rhoC,jST,rCS,
+                      cROS,dS.Sdt=dS.dt/S,S)
+    out
+  })
+}
