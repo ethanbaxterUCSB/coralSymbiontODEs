@@ -120,7 +120,7 @@ initState <- function(pars) {
   with(as.list(pars), {
     # Initial Host fluxes
     rhoN <- mmk(N, KN, jNm)
-    jeC <- jeC0+
+    jeC <- jeC0
     jCO2 <- kCO2 * jeC
     jHG <- jHG0
     rCH <- jHT0 * sigmaCH
