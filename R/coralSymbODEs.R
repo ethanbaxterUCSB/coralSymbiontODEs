@@ -156,7 +156,8 @@ initState <- function(pars) {
 coRal.solveCoralWrapper <- function(time, env, pars) {
   # time is equivalent to times
   # can only be used for constant env values at this point
-  newPars <- append(pars, c(L = env[['L']][[1]],N = env[['N']][[1]],X = env[['X']][[1]]))
+  newPars <- append(pars, c(L = env[['L']][[1]],N = env[['N']][[1]],X = env[['X']][[1]],
+                            jHG0 = 0.25,jeC0 = 10,cROS0 = 1))
   run <- solveCoral(time, newPars)
   with(as.data.frame(run),{
     out <- data.frame(time,env$L,env$N,env$X,jN,rhoN,jeC,jCO2,jHG,rCH,
@@ -165,3 +166,4 @@ coRal.solveCoralWrapper <- function(time, env, pars) {
     out
   })
 }
+
