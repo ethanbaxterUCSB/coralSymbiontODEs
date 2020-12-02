@@ -153,7 +153,7 @@ initState <- function(pars) {
 #'
 #' Has the same input and output as run_coral() from the coRal package
 #' @export
-run_coral_ode <- function(time, env, pars) {
+coRal.solveCoralWrapper <- function(time, env, pars) {
   # time is equivalent to times
   # can only be used for constant env values at this point
   newPars <- append(pars, c(L = env[['L']][[1]],N = env[['N']][[1]],X = env[['X']][[1]],
