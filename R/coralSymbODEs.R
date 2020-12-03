@@ -160,7 +160,7 @@ run_coral_ode <- function(time, env, pars) {
                             jHG0 = 0.25,jeC0 = 10,cROS0 = 1))
   run <- solveCoral(time, newPars)
   with(as.data.frame(run),{
-    out <- data.frame(time,env$L,env$N,env$X,jN,rhoN,jeC,jCO2,jHG,rCH,
+    out <- data.frame(time,env$L,env$N,env$X,jX,jN,rNH,rhoN,jeC,jCO2,jHG,rCH,
                       dH.Hdt=dH.dt/H,H,rNS,jL,jCP,jeL,jNPQ,jSG,rhoC,jST,rCS,
                       cROS,dS.Sdt=dS.dt/S,S)
     out
